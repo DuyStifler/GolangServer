@@ -1,11 +1,12 @@
 package database
 
 import (
-	"github.com/gocraft/dbr"
 	"log"
+
+	"github.com/gocraft/dbr"
 )
 
-type Database struct {
+type ServerDatabase struct {
 	MySQLUser       string
 	MySQLPassword   string
 	MySQLPort       string
@@ -14,7 +15,7 @@ type Database struct {
 	MySQLDatabase   string
 }
 
-func (d *Database) InitDatabaseMaster() *dbr.Session {
+func (d *ServerDatabase) InitDatabaseMaster() *dbr.Session {
 	db, err := dbr.Open("mysql",
 		d.MySQLUser+":"+d.MySQLPassword+"@tcp("+d.MySQLMasterURL+":"+d.MySQLPort+")/"+d.MySQLDatabase+"?parseTime=true&charset=utf8mb4,utf8",
 		nil)
@@ -26,7 +27,7 @@ func (d *Database) InitDatabaseMaster() *dbr.Session {
 	return db.NewSession(nil)
 }
 
-func (d *Database) GenerateSlave() []*dbr.Session {
+func (d *ServerDatabase) GenerateSlave() []*dbr.Session {
 	var sessions []*dbr.Session
 
 	for _, url := range d.MySQLReplicaURL {

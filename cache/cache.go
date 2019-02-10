@@ -5,11 +5,9 @@ import (
 	"fmt"
 
 	"github.com/go-redis/redis"
-	"github.com/google/logger"
 )
 
 type Cache struct {
-	Logger *logger.Logger
 	Config *ConfigCache
 	client *redis.Client
 }
@@ -19,9 +17,8 @@ type ConfigCache struct {
 	Port int
 }
 
-func NewRedisCache(config *ConfigCache, logger *logger.Logger) error {
+func NewRedisCache(config *ConfigCache) (Cache, error) {
 	cache := &Cache{
-		Logger: logger,
 		Config: config,
 	}
 
@@ -31,11 +28,10 @@ func NewRedisCache(config *ConfigCache, logger *logger.Logger) error {
 
 	_, err := client.Ping().Result()
 	if err != nil {
-		cache.Logger.Error("[ERROR - cache] - ping cache %s ", err)
-		return errors.New(fmt.Sprintf("[ERROR - cache] - ping cache %s ", err))
+		return Cache{}, errors.New(fmt.Sprintf("[ERROR - cache] - ping cache %s ", err))
 	}
 
 	cache.client = client
 
-	return nil
+	return cache, nil
 }
