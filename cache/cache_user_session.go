@@ -16,9 +16,11 @@ func (c *Cache) GetUserSession(sessionKey string) (*CUserSession, error) {
 	if value.Err() != nil {
 		return obj, value.Err()
 	} else {
+		//UserID
 		if value.Val()[0] != nil {
 			obj.UserID = value.Val()[0].(string)
 		}
+		//Seq
 		if value.Val()[1] != nil {
 			obj.Seq = value.Val()[1].(int)
 		}
