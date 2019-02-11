@@ -1,10 +1,12 @@
 package cache
 
-import "DuyStifler/GolangServer/keys"
+import (
+	"DuyStifler/GolangServer/keys"
+	"DuyStifler/GolangServer/utils"
+)
 
 type CUserSession struct {
 	UserID  string
-	Session string
 	Seq     int
 }
 
@@ -29,10 +31,33 @@ func (c *Cache) GetUserSession(sessionKey string) (*CUserSession, error) {
 	return obj, nil
 }
 
-func (obj *CUserSession) convertFromObjectToString(value CUserSession) string {
-	panic("implement me")
+func (c *Cache) UpdateSession(sessionKey string) error {
+	key := keys.CACHE_USER_SESSION + sessionKey
+	return c.client.Expire(key, keys.DEFAULT_EXPIRE_SESSION).Err()
 }
 
-func (obj *CUserSession) convertFromStringToObject(str string) CUserSession {
-	panic("implement me")
+func (c *Cache) CreateSession(userID string) error {
+	sessionKey := utils.GenerateSessionToken()
+	key := keys.CACHE_USER_SESSION + sessionKey
+
+	obj := &CUserSession{
+		UserID: userID,
+		Seq: 0,
+	}
+
+	stt := c.client.HMSet(key, obj.convertToMap())
+	if stt.Err() != nil {
+		return nil
+	}
+
+	return c.client.Expire(key, keys.DEFAULT_EXPIRE_SESSION).Err()
 }
+
+func (c *CUserSession) convertToMap() map[string]interface{} {
+	m := make(map[string]interface{})
+	m["user_id"] = c.UserID
+	m["seq"] = c.Seq
+	return m
+}
+
+

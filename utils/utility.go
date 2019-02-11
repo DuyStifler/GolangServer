@@ -6,6 +6,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/satori/go.uuid"
+
 	"DuyStifler/GolangServer/cache"
 	"DuyStifler/GolangServer/database"
 	"DuyStifler/GolangServer/model"
@@ -48,4 +50,8 @@ func ReadJsonConfig() (*model.ServerConfig, error) {
 	}
 
 	return config, nil
+}
+
+func GenerateSessionToken() string {
+	return uuid.Must(uuid.NewV4()).String()
 }

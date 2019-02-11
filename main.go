@@ -5,7 +5,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"strings"
 	"time"
 
 	serverCache "DuyStifler/GolangServer/cache"
@@ -57,13 +56,23 @@ func setupMiddleWare(e *echo.Echo, masterSession *dbr.Session, replicasSession [
 	e.Use(echoMw.Recover())
 	e.Use(echoMw.Logger())
 	e.Use(echoMw.CORS())
-	e.Use(Auth)
+	e.Use(MiddlewareAuthConfig(model.MiddlewareAuthConfig{
+		Skipper: func(context echo.Context) bool {
+			if context.Path() == "/api/login" {
+				return true
+			}
+			return false
+		},
+	}))
 }
 
 func MiddlewareAuthConfig(config model.MiddlewareAuthConfig) echo.MiddlewareFunc {
 	if config.Skipper == nil {
 		config.Skipper = func(c echo.Context) bool {
-			if strings.HasSuffix(c.Request().URL.String(), "login") {
+			//if strings.HasSuffix(c.Request().URL.String(), "login") {
+			//	return true
+			//}
+			if c.Request().URL.Path == "/api/login" {
 				return true
 			}
 			return false
@@ -78,8 +87,31 @@ func MiddlewareAuthConfig(config model.MiddlewareAuthConfig) echo.MiddlewareFunc
 			if token == "" {
 				token = c.QueryParam("token")
 			}
-			if config.Skipper(c) {
 
+			appHandler := c.Get("app_handler").(handler.AppHandler)
+			userSession, err := appHandler.Cache.GetUserSession(token)
+			if err != nil {
+				return err
+			}
+			if userSession.UserID != "" {
+				appHandler.UserID = userSession.UserID
+				err = appHandler.Cache.UpdateSession(token)
+				if err != nil {
+					return err
+				}
+				return next(c)
+			} else {
+				//dont have a session for this token
+				if config.Skipper(c) {
+					//create token
+					err = appHandler.Cache.CreateSession(appHandler.UserID)
+					if err != nil {
+						return err
+					}
+					return next(c)
+				} else {
+					return echo.ErrUnauthorized
+				}
 			}
 		})
 	}
