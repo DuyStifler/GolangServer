@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"flag"
 	"log"
 	"math/rand"
@@ -69,9 +70,6 @@ func setupMiddleWare(e *echo.Echo, masterSession *dbr.Session, replicasSession [
 func MiddlewareAuthConfig(config model.MiddlewareAuthConfig) echo.MiddlewareFunc {
 	if config.Skipper == nil {
 		config.Skipper = func(c echo.Context) bool {
-			//if strings.HasSuffix(c.Request().URL.String(), "login") {
-			//	return true
-			//}
 			if c.Request().URL.Path == "/api/login" {
 				return true
 			}
@@ -81,6 +79,10 @@ func MiddlewareAuthConfig(config model.MiddlewareAuthConfig) echo.MiddlewareFunc
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return echo.HandlerFunc(func(c echo.Context) error {
+			if c.Request().Header.Get(keys.VERSION_KEY) != config.Version {
+				return errors.New("version wrong")
+			}
+
 			//TODO
 			//de tam the nay, sau nay xem the nao se sua lai cho vao body sau
 			token := c.Request().Header.Get("Authorization")

@@ -28,4 +28,5 @@ type ServerConfigCache struct {
 
 type MiddlewareAuthConfig struct {
 	Skipper middleware.Skipper
+	Version string `json:"version"`
 }
