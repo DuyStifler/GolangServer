@@ -1,51 +1,28 @@
 package database
 
 import (
-	"log"
-
-	"github.com/gocraft/dbr"
+	"DuyStifler/GolangServer/database/database_connector"
+	"DuyStifler/GolangServer/models"
+	"DuyStifler/GolangServer/utils"
 )
 
-type ServerDatabase struct {
-	MySQLUser       string
-	MySQLPassword   string
-	MySQLPort       string
-	MySQLMasterURL  string
-	MySQLReplicaURL []string
-	MySQLDatabase   string
+type Database struct {
+	dbConnector *database_connector.DatabaseConnector
+	logger      *utils.Logger
 }
 
-func (d *ServerDatabase) InitDatabaseMaster() *dbr.Session {
-	db, err := dbr.Open("mysql",
-		d.MySQLUser+":"+d.MySQLPassword+"@tcp("+d.MySQLMasterURL+":"+d.MySQLPort+")/"+d.MySQLDatabase+"?parseTime=true&charset=utf8mb4,utf8",
-		nil)
+func (d *Database) DbConnector() *database_connector.DatabaseConnector {
+	return d.dbConnector
+}
+
+func NewDatabase(dbConfig *models.DatabaseConfig, serverLog *utils.Logger) (*Database, error) {
+	dbConnection, err := database_connector.NewDatabaseConnector(dbConfig.UserName, dbConfig.Password, dbConfig.Port, dbConfig.UrlMaster,
+		dbConfig.UrlReplicas, dbConfig.Schema)
 
 	if err != nil {
-		log.Println(err)
-		return nil
-	}
-	return db.NewSession(nil)
-}
-
-func (d *ServerDatabase) GenerateSlave() []*dbr.Session {
-	var sessions []*dbr.Session
-
-	for _, url := range d.MySQLReplicaURL {
-		db, err := dbr.Open("mysql",
-			d.MySQLUser+":"+d.MySQLPassword+"@tcp("+url+":"+d.MySQLPort+")/"+d.MySQLDatabase+"?parseTime=true&charset=utf8mb4,utf8",
-			nil)
-
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		sessions = append(sessions, db.NewSession(nil))
+		return nil, err
 	}
 
-	if len(sessions) == 0 {
-		sessions = append(sessions, d.InitDatabaseMaster())
-	}
 
-	return sessions
+	return &Database{dbConnection, serverLog}, nil
 }

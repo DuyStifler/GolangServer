@@ -1,0 +1,16 @@
+## Project Structor
+- cache - connect and query to server cache
+    -   query
+    -   migration
+- database - connect and query to server db
+    -   entity (db models)
+    -   query
+    - migration
+- model
+- server
+    -  server admin
+    - server game
+- scripts
+    - install
+    - run
+- http_server (server for both admin and api logic)
