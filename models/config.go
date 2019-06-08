@@ -14,6 +14,7 @@ type ServerConfig struct {
 	Database    DatabaseConfig  `json:"database"`
 	Cache       CacheConfig     `json:"cache"`
 	Log         LogConfig       `json:"log_config"`
+	GroupUrl    string          `json:"group_url"`
 }
 
 type ServerSSlConfig struct {

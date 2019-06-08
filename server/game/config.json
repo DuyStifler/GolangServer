@@ -1,0 +1,27 @@
+{
+  "expired_time": 0,
+  "version": "",
+  "ssl": {
+    "is_enabled": false,
+    "key_dir": "",
+    "cert_dir": ""
+  },
+  "port": 0,
+  "database": {
+    "url_master": "",
+    "url_replicas": [],
+    "user_name": "",
+    "password": "",
+    "schema": "",
+    "string": ""
+  },
+  "cache": {
+    "url": "",
+    "port": ""
+  },
+  "log_config": {
+    "log_info_dir": "",
+    "log_error_dir": ""
+  },
+  "group_url": ""
+}

@@ -1,15 +1,18 @@
 package http_server
 
 import (
-	"os"
-
 	serverCache "DuyStifler/GolangServer/cache"
 	serverDatabase "DuyStifler/GolangServer/database"
 	"DuyStifler/GolangServer/models"
 	"DuyStifler/GolangServer/utils"
+	"fmt"
 
 	"github.com/labstack/echo"
 	echoMw "github.com/labstack/echo/middleware"
+)
+
+const (
+	SCOPE_FIELD = "user_connector"
 )
 
 type HttpServer struct {
@@ -21,13 +24,27 @@ type HttpServer struct {
 	e *echo.Echo
 }
 
-func NewHttpServer() *HttpServer {
+func (a *HttpServer) Cache() *serverCache.Cache {
+	return a.cache
+}
+
+func (a *HttpServer) Logger() *utils.Logger {
+	return a.logger
+}
+
+func (a *HttpServer) Database() *serverDatabase.Database {
+	return a.database
+}
+
+func (a *HttpServer) E() *echo.Echo {
+	return a.e
+}
+
+func NewHttpServer(serverConfig *models.ServerConfig) *HttpServer {
+	var err error
 	httpServer := &HttpServer{}
 
-	err := httpServer.generateConfig()
-	if err != nil {
-		return nil
-	}
+	httpServer.config = serverConfig
 
 	httpServer.logger, err = utils.NewLogger(httpServer.config.Log.LogErrorDir, httpServer.config.Log.LogInfoDir)
 	if err != nil {
@@ -39,28 +56,12 @@ func NewHttpServer() *HttpServer {
 		return nil
 	}
 
-	return nil
-}
-
-func (a *HttpServer) generateConfig() error {
-	jsonFile, err := os.Open("config.json")
-	if err != nil {
-		return err
-	}
-	defer func() {
-		jsonFile.Close()
-	}()
-
-	a.config, err = models.NewServerConfig(jsonFile)
-	if err != nil {
-		return err
-	}
+	httpServer.setupMiddleWare(httpServer.e, httpServer.database, httpServer.cache)
 
 	return nil
 }
 
-
-func setupMiddleWare(e *echo.Echo, database *serverDatabase.Database, cache serverCache.Cache, rrCount *int64) {
+func (a *HttpServer) setupMiddleWare(e *echo.Echo, database *serverDatabase.Database, cache *serverCache.Cache) {
 	e.Use(TransactionHandler(database, cache))
 	e.Use(echoMw.Gzip())
 	e.Use(echoMw.Recover())
@@ -128,7 +129,16 @@ func setupMiddleWare(e *echo.Echo, database *serverDatabase.Database, cache serv
 //	}
 //}
 
-func TransactionHandler(database *serverDatabase.Database, cache serverCache.Cache) echo.MiddlewareFunc {
+func (a *HttpServer) GetScope(c echo.Context) *models.UserConnector {
+	scope := c.Get(SCOPE_FIELD).(models.UserConnector)
+	return &scope
+}
+
+func (a *HttpServer) Run() {
+	a.e.Logger.Fatal(a.e.Start(fmt.Sprintf(":%d", a.config.Port)))
+}
+
+func TransactionHandler(database *serverDatabase.Database, cache *serverCache.Cache) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return echo.HandlerFunc(func(c echo.Context) error {
 
@@ -146,7 +156,7 @@ func TransactionHandler(database *serverDatabase.Database, cache serverCache.Cac
 			}
 			userConnector.SetReplicaTx(replicaTx)
 
-			c.Set("user_connector", userConnector)
+			c.Set(SCOPE_FIELD, userConnector)
 
 			if err := next(c); err != nil {
 				//get doesnt need rollback because it will not change data
