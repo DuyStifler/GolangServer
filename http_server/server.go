@@ -67,6 +67,8 @@ func (a *HttpServer) setupMiddleWare(e *echo.Echo, database *serverDatabase.Data
 	e.Use(echoMw.Recover())
 	e.Use(echoMw.Logger())
 	e.Use(echoMw.CORS())
+
+	e.Use(TransactionHandler(database, cache))
 	//e.Use(MiddlewareAuthConfig(model.MiddlewareAuthConfig{
 	//	Skipper: func(context echo.Context) bool {
 	//		if context.Path() == "/api/login" {
@@ -167,6 +169,18 @@ func TransactionHandler(database *serverDatabase.Database, cache *serverCache.Ca
 			_ = replicaTx.Commit()
 
 			return nil
+		})
+	}
+}
+
+func AuthWIthConfig(serverConfig models.ServerConfig) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return echo.HandlerFunc(func (c echo.Context) error {
+			if !utils.InStringArray(c.Path(), serverConfig.SkipPaths) {
+
+			}
+
+			return next(c)
 		})
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"DuyStifler/GolangServer/cache"
 	"github.com/labstack/gommon/log"
 	"os"
 
@@ -25,7 +26,8 @@ func main() {
 		log.Fatal("error ", err)
 	}
 
-	manager = managerPackage.NewManager()
+	serverCache := cache.NewCache(serverConfig)
+	manager = managerPackage.NewManager(serverCache)
 	httpServer = httpServerPackage.NewHttpServer(serverConfig)
 
 	router := routers.NewGameRouter(serverConfig.GroupUrl, httpServer, manager)

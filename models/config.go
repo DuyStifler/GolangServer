@@ -15,6 +15,7 @@ type ServerConfig struct {
 	Cache       CacheConfig     `json:"cache"`
 	Log         LogConfig       `json:"log_config"`
 	GroupUrl    string          `json:"group_url"`
+	SkipPaths   []string        `json:"skip_paths"`
 }
 
 type ServerSSlConfig struct {

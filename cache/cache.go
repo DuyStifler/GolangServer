@@ -8,9 +8,17 @@ import (
 	"github.com/go-redis/redis"
 )
 
+const (
+	CACHE_KEY_PREFIX = "game"
+)
+
 type Cache struct {
 	serverConfig *models.ServerConfig
 	client       *redis.Client
+}
+
+func (c *Cache) ServerConfig() *models.ServerConfig {
+	return c.serverConfig
 }
 
 func NewCache(serverConfig *models.ServerConfig) *Cache {
@@ -32,4 +40,8 @@ func (c *Cache) Connect() {
 
 func (c *Cache) Client() *redis.Client {
 	return c.client
+}
+
+func (c *Cache) GetPrefixCache() string {
+	return CACHE_KEY_PREFIX
 }
